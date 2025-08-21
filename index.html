@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registro de Inspecciones de Fabricación (SGI-PG05F08)</title>
+
+  <link rel="icon" href="/fridevi-icon-32.png">
+  <link rel="apple-touch-icon" href="/fridevi-icon-180.png">
+  <link rel="manifest" href="/manifest.json">
+  <script src="./sw-init.js"></script>
+
+
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/fridevi-icon-192.png" alt="FRIDEVI" class="brand-logo">
+      <div class="brand-text">
+        <strong>FRIDEVI</strong>
+        <small>SGI-PG05F08</small>
+      </div>
+    </div>
+    <div class="meta">
+      <label>Área de producción:
+        <input id="area" type="text" placeholder="Ej.: Faena vacuna" />
+      </label>
+      <label>Fecha:
+        <input id="fecha" type="date" />
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>INSPECCIONES DE FABRICACIÓN: LIMPIEZA E HIGIENE</h2>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>INSPECCIÓN DE LA LIMPIEZA DE LAS INSTALACIONES</th>
+            <th class="col-si">SI</th>
+            <th class="col-no">NO</th>
+            <th style="width:90px">Anexo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-higiene"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Gestión de los registros</h2>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Descripción</th>
+            <th class="col-si">SI</th>
+            <th class="col-no">NO</th>
+            <th style="width:90px">Anexo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-gestion"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>INSPECCIONES DE FABRICACIÓN: INSTALACIONES</h2>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Área / Elemento</th>
+            <th>Defecto</th>
+            <th class="col-si">SI</th>
+            <th class="col-no">NO</th>
+            <th style="width:90px">Anexo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-instalaciones"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Resumen de hallazgos</h2>
+      <textarea id="resumen" rows="5" placeholder="Observaciones generales, acciones, responsables..."></textarea>
+    </section>
+
+    <section class="firmas">
+      <div>
+        <label>Inspección realizada por:
+          <input id="insp-por" type="text" />
+        </label>
+      </div>
+      <div>
+        <label>Se comunican hallazgos a:
+          <input id="comunica-a" type="text" />
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Notificaciones</h2>
+      <div class="notifs">
+        <label>Título:
+          <input id="notif-title" type="text" placeholder="Recordatorio SGI-PG05F08" />
+        </label>
+        <label>Cuerpo:
+          <input id="notif-body" type="text" placeholder="Completar inspección de hoy" />
+        </label>
+        <label>Fecha y hora:
+          <input id="notif-datetime" type="datetime-local" />
+        </label>
+        <button id="btn-programar-push">Programar push</button>
+        <button id="btn-listar-push">Mis recordatorios</button>
+      </div>
+      <div id="mis-recordatorios"></div>
+    </section>
+
+    <div class="acciones">
+      <button id="btn-guardar">Guardar en Drive</button>
+      <span id="msg"></span>
+    </div>
+  </main>
+
+  <!-- Modal Anexo (reutilizable) -->
+  <div id="anexo-modal" hidden>
+    <div class="anexo-card">
+      <h3>Anexo del ítem <span id="anexo-item-label"></span></h3>
+
+      <label>Tipo
+        <select id="anexo-tipo">
+          <option>Hallazgo</option>
+          <option>Acción</option>
+          <option>Responsable</option>
+          <option>Fecha compromiso</option>
+        </select>
+      </label>
+
+      <label>Observación
+        <textarea id="anexo-texto" rows="4" maxlength="1000" placeholder="Detalle breve…"></textarea>
+      </label>
+
+      <label>Foto (1 máx, ≤ 1 MB)
+        <input type="file" id="anexo-foto" accept="image/*" capture="environment">
+        <small id="anexo-foto-info"></small>
+      </label>
+
+      <div class="anexo-actions">
+        <button id="anexo-cancelar" type="button">Cancelar</button>
+        <button id="anexo-guardar" type="button">Guardar anexo</button>
+        <button id="anexo-borrar" type="button">Borrar anexo</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <small>Vigencia: Feb-2024 • Versión 00 • SGI-PG05F08</small>
+  </footer>
+
+  <script>
+    // 👉 pegá acá tu URL de Apps Script (la de /exec)
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-qWNpnHpoLEZPKfEYHXs10qEbKBxMGjNtbwicYJtIHHygPnE7W5VVTMskdhWLeLcAFw/exec";
+
+    // 👉 clave pública VAPID para web push (te la paso cuando la generemos)
+    window.VAPID_PUBLIC = "BEcJOxcRQatQ9iT910iT1kga0ytlE2uY3NSikaue1T1Gt-nJVOoRiWWymgoZPnZ1IMC7lg7CtKiM4wHQlCLXnTY";
+  </script>
+  <script src="./app.js"></script>
+  <script src="./sw-init.js"></script>
+</body>
+</html>
