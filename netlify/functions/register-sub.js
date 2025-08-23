@@ -1,7 +1,22 @@
 import { blobs } from '@netlify/blobs';
-export default async (req) => {
-  const sub = await req.json();
-  const id = crypto.randomUUID();
-  await blobs.set(`subs/${id}.json`, JSON.stringify(sub));
-  return new Response(JSON.stringify({ ok:true, id }), { status:200 });
+import { randomUUID } from 'node:crypto';
+
+export default async (event) => {
+  try {
+    const sub = JSON.parse(event.body || "{}");
+    const id = randomUUID();
+    await blobs.set(`subs/${id}.json`, JSON.stringify(sub));
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ok: true, id })
+    };
+  } catch (err) {
+    console.error("register-sub ERROR:", err);
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ok: false, error: String(err) })
+    };
+  }
 };
