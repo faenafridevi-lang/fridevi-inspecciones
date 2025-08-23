@@ -1,20 +1,18 @@
 import { blobs } from '@netlify/blobs';
 
-export default async (event) => {
+export default async (request) => {
   try {
-    const { id } = JSON.parse(event.body || "{}");
+    const { id } = await request.json();
     await blobs.delete(`reminders/${id}.json`);
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: true })
-    };
+    return new Response(
+      JSON.stringify({ ok: true }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (err) {
     console.error("delete-reminder ERROR:", err);
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: false, error: String(err) })
-    };
+    return new Response(
+      JSON.stringify({ ok: false, error: String(err) }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   }
 };
