@@ -1,6 +1,7 @@
 export default async () => {
-  return new Response(JSON.stringify({ ok: true, msg: "pong" }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" }
-  });
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ok: true, msg: "pong" })
+  };
 };
