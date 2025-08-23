@@ -20,7 +20,7 @@ export default async () => {
     const reminders = await Promise.all(
       remList.blobs.map(b => blobs.get(b.key).then(r => r.text()).then(JSON.parse))
     );
-    const now = Date.now(); const windowMs = 2 * 60 * 60 * 1000;
+    const now = Date.now(), windowMs = 2 * 60 * 60 * 1000;
     const due = reminders.filter(r => Math.abs(new Date(r.whenISO).getTime() - now) <= windowMs);
 
     // enviar
@@ -36,24 +36,22 @@ export default async () => {
       }
     }
 
-    // log
+    // log por día
     const logKey = `logs/${new Date().toISOString().slice(0,10)}.json`;
     const prev = await blobs.get(logKey).then(r => r?.text()).catch(() => null);
     const arr = prev ? JSON.parse(prev) : [];
     arr.push({ ts: new Date().toISOString(), results });
     await blobs.set(logKey, JSON.stringify(arr));
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: true, sent: results.length })
-    };
+    return new Response(
+      JSON.stringify({ ok: true, sent: results.length }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (err) {
     console.error("cron-dispatch ERROR:", err);
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: false, error: String(err) })
-    };
+    return new Response(
+      JSON.stringify({ ok: false, error: String(err) }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   }
 };
