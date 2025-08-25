@@ -4,7 +4,11 @@
 
 [functions]
   node_bundler = "esbuild"
-  directory = "netlify/functions"
+
+# Corre cada 2 minutos (ajustá a gusto)
+[functions."cron-dispatch"]
+  schedule = "*/2 * * * *"
+
 
 [[scheduled.functions]]
   path = "/.netlify/functions/cron-dispatch"
