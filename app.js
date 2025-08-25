@@ -1,4 +1,7 @@
-// ====== Catálogos ======
+/***** CONFIG: pegá acá la URL del Web App de GAS (termina en /exec) *****/
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznfi8-bS1g62D8DnGHiVDbaDuyA4vncqDB7UT2axEu_8UgUi5SEdYmnlW_7j2_BGtisg/exec";
+
+/***** Catálogos *****/
 const HIGIENE_ITEMS = [
   "Limpieza de superficies en contacto con alimentos",
   "Limpieza de equipos simples",
@@ -52,7 +55,7 @@ const INSTALACIONES_ITEMS = [
   { texto: "Cortinas plásticas — Sucias", n: 42 },
 ];
 
-// ====== UI helpers ======
+/***** UI helpers *****/
 function makeToggleGroup() {
   const wrap = document.createElement("div");
   const yes = document.createElement("button");
@@ -65,7 +68,6 @@ function makeToggleGroup() {
   wrap.append(yes, no);
   return wrap;
 }
-
 function attachAnexoButton(cell, key, label) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -76,14 +78,14 @@ function attachAnexoButton(cell, key, label) {
   cell.appendChild(btn);
 }
 
-// ====== construir tablas ======
+/***** construir tablas *****/
 function addHigieneRows() {
   const tbody = document.getElementById("tbody-higiene");
   HIGIENE_ITEMS.forEach((txt, idx) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${idx+1}</td><td>${txt}</td>`;
     const tdSi = document.createElement("td"); tdSi.appendChild(makeToggleGroup());
-    const tdNo = document.createElement("td"); // (vacío: el toggle vive en la celda previa)
+    const tdNo = document.createElement("td");
     const tdAn = document.createElement("td"); attachAnexoButton(tdAn, `hig_${idx+1}`, `${idx+1}. ${txt}`);
     tr.appendChild(tdSi); tr.appendChild(tdNo); tr.appendChild(tdAn);
     tbody.appendChild(tr);
@@ -116,7 +118,7 @@ function addInstalacionesRows() {
   });
 }
 
-// ====== anexos (estado en memoria) ======
+/***** anexos (estado en memoria) *****/
 const anexos = new Map(); // key -> {tipo, texto, fotoB64, fileName, label}
 
 async function compressToBase64(file, maxBytes=1_000_000, maxSide=1200) {
@@ -171,7 +173,7 @@ function openAnexoModal(key, label) {
   };
 }
 
-// ====== recolección y envío ======
+/***** recolección y envío *****/
 function collectData() {
   const q = sel => document.querySelector(sel);
   const data = {
@@ -187,7 +189,6 @@ function collectData() {
   document.querySelectorAll("#tbody-instalaciones .toggle-wrap").forEach((node, i) => data.instalaciones.push({ n: INSTALACIONES_ITEMS[i].n, estado: node.dataset.value || null }));
   return data;
 }
-
 function collectDataExtended() {
   const data = collectData();
   data.anexos = [];
@@ -196,6 +197,7 @@ function collectDataExtended() {
 }
 
 async function postToScript(payload) {
+  // Con "no-cors" no leemos respuesta; si querés ver el JSON, quitá "mode:'no-cors'".
   await fetch(APPS_SCRIPT_URL, {
     method: "POST",
     mode: "no-cors",
@@ -207,38 +209,42 @@ async function postToScript(payload) {
 
 function showMsg(t){ const m=document.getElementById("msg"); m.textContent=t; setTimeout(()=>m.textContent="",6000); }
 
-// ====== notificaciones (Netlify Functions) ======
-async function schedulePush(title, body, whenISO) {
-  const res = await fetch("/.netlify/functions/schedule-reminder", {
-    method:"POST", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ title, body, whenISO })
+/***** Recordatorios por GAS (sin Netlify) *****/
+async function scheduleReminder({ titulo, cuandoISO, nota, email }) {
+  const r = await fetch(APPS_SCRIPT_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ action:"scheduleReminder", titulo, cuandoISO, nota, emailDest: email })
   });
-  return res.json();
+  return r.json();
 }
 async function listReminders() {
-  const res = await fetch("/.netlify/functions/list-reminders");
-  return res.json();
+  const r = await fetch(APPS_SCRIPT_URL + "?action=listReminders");
+  return r.json();
 }
 async function deleteReminder(id) {
-  const res = await fetch("/.netlify/functions/delete-reminder", {
-    method:"POST", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ id })
+  const r = await fetch(APPS_SCRIPT_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ action:"deleteReminder", id })
   });
-  return res.json();
+  return r.json();
 }
 
 function renderReminders(list){
   const box = document.getElementById('mis-recordatorios');
   if (!list?.items?.length){ box.innerHTML = "<em>Sin recordatorios</em>"; return; }
-  box.innerHTML = `<table class="tabla"><thead><tr><th>Título</th><th>Horario</th><th></th></tr></thead><tbody>${
-    list.items.map(r=>`<tr><td>${r.title||''}</td><td>${r.whenISO||''}</td><td><button data-del="${r.id}">Eliminar</button></td></tr>`).join("")
-  }</tbody></table>`;
+  box.innerHTML = `<table class="tabla">
+      <thead><tr><th>Título</th><th>Horario</th><th></th></tr></thead>
+      <tbody>${
+        list.items.map(r=>`<tr><td>${r.titulo||''}</td><td>${r.cuandoISO||''}</td><td><button data-del="${r.id}">Eliminar</button></td></tr>`).join("")
+      }</tbody></table>`;
   box.querySelectorAll("[data-del]").forEach(btn=>{
     btn.onclick = async ()=>{ await deleteReminder(btn.dataset.del); renderReminders(await listReminders()); };
   });
 }
 
-// ====== init ======
+/***** init *****/
 document.addEventListener("DOMContentLoaded", async () => {
   // fecha hoy
   const today = new Date(); const pad = n => String(n).padStart(2,"0");
@@ -250,8 +256,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = collectDataExtended();
     if (!data.fecha) { showMsg("Completá la fecha."); return; }
     showMsg("Guardando en Drive...");
-    try { await postToScript({ type: "saveInspection", payload: data }); showMsg("Guardado OK ✔️"); }
-    catch(e){ console.error(e); showMsg("Error al guardar."); }
+    try { 
+      await postToScript({ type: "saveInspection", payload: data });
+      showMsg("Guardado OK ✔️");
+    } catch(e){ console.error(e); showMsg("Error al guardar."); }
   };
 
   document.getElementById("btn-programar-push").onclick = async ()=>{
@@ -260,8 +268,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const dt    = document.getElementById("notif-datetime").value;
     if (!dt){ showMsg("Elegí fecha y hora."); return; }
     const whenISO = new Date(dt).toISOString();
-    await schedulePush(title, body, whenISO);
+    await scheduleReminder({ titulo:title, cuandoISO:whenISO, nota:body, email:"faenafridevi@gmail.com" });
     renderReminders(await listReminders());
   };
+
   document.getElementById("btn-listar-push").onclick = async ()=> renderReminders(await listReminders());
 });
