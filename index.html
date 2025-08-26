@@ -8,8 +8,6 @@
   <link rel="icon" href="/fridevi-icon-32.png">
   <link rel="apple-touch-icon" href="/fridevi-icon-180.png">
   <link rel="manifest" href="/manifest.json">
-  <script src="./sw-init.js"></script>
-
 
   <link rel="stylesheet" href="./style.css" />
 </head>
@@ -112,7 +110,7 @@
         <label>Fecha y hora:
           <input id="notif-datetime" type="datetime-local" />
         </label>
-        <button id="btn-programar-push">Programar push</button>
+        <button id="btn-programar-push">Programar recordatorio</button>
         <button id="btn-listar-push">Mis recordatorios</button>
       </div>
       <div id="mis-recordatorios"></div>
@@ -124,7 +122,7 @@
     </div>
   </main>
 
-  <!-- Modal Anexo (reutilizable) -->
+  <!-- Modal Anexo -->
   <div id="anexo-modal" hidden>
     <div class="anexo-card">
       <h3>Anexo del ítem <span id="anexo-item-label"></span></h3>
@@ -142,7 +140,7 @@
         <textarea id="anexo-texto" rows="4" maxlength="1000" placeholder="Detalle breve…"></textarea>
       </label>
 
-      <label>Foto (1 máx, ≤ 1 MB)
+      <label>Foto (1 máx, ≤ 1 MB)
         <input type="file" id="anexo-foto" accept="image/*" capture="environment">
         <small id="anexo-foto-info"></small>
       </label>
@@ -159,14 +157,18 @@
     <small>Vigencia: Feb-2024 • Versión 00 • SGI-PG05F08</small>
   </footer>
 
+  <!-- Config que necesita app.js -->
   <script>
-    // 👉 pegá acá tu URL de Apps Script (la de /exec)
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-qWNpnHpoLEZPKfEYHXs10qEbKBxMGjNtbwicYJtIHHygPnE7W5VVTMskdhWLeLcAFw/exec";
-
-    // 👉 clave pública VAPID para web push (te la paso cuando la generemos)
+    // 👉 URL correcta del Web App de GAS (termina en /exec)
+    window.APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznfi8-bS1g62D8DnGHiVDbaDuyA4vncqDB7UT2axEu_8UgUi5SEdYmnlW_7j2_BGtisg/exec";
+    // (opcional) si dejás de usar web-push, podés quitar esta línea:
     window.VAPID_PUBLIC = "BEcJOxcRQatQ9iT910iT1kga0ytlE2uY3NSikaue1T1Gt-nJVOoRiWWymgoZPnZ1IMC7lg7CtKiM4wHQlCLXnTY";
   </script>
+
+  <!-- App JS -->
   <script src="./app.js"></script>
+
+  <!-- Service worker init: solo una vez -->
   <script src="./sw-init.js"></script>
 </body>
 </html>
