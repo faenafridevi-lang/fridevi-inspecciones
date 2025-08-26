@@ -1,5 +1,5 @@
-/***** CONFIG: pegá acá la URL del Web App de GAS (termina en /exec) *****/
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznfi8-bS1g62D8DnGHiVDbaDuyA4vncqDB7UT2axEu_8UgUi5SEdYmnlW_7j2_BGtisg/exec";
+/***** CONFIG: toma la URL definida en index.html *****/
+const APPS_SCRIPT_URL = window.APPS_SCRIPT_URL;
 
 /***** Catálogos *****/
 const HIGIENE_ITEMS = [
